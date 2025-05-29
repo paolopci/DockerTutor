@@ -2,28 +2,31 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copy only the project file and restore as distinct layers
-COPY ["DockerCourseFrontend/DockerCourseFrontend.csproj", "DockerCourseFrontend/"]
-RUN dotnet restore "DockerCourseFrontend/DockerCourseFrontend.csproj"
+# 1. Copia e restore del progetto
+COPY ["DockerCourseFrontend.csproj", "./"]
+RUN dotnet restore "DockerCourseFrontend.csproj"
 
-# Copy the rest of the source code and build
+# 2. Copia del sorgente e publish
 COPY . .
-WORKDIR "/src/DockerCourseFrontend"
-RUN dotnet publish "DockerCourseFrontend.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "DockerCourseFrontend.csproj" \
+    -c Release \
+    -o /app/publish \
+    /p:UseAppHost=false
 
-# --- Nginx image for static hosting ---
-FROM nginx:alpine AS final
+# --- STAGE 2: runtime Nginx ---
+FROM nginx:alpine AS runtime
 WORKDIR /usr/share/nginx/html
 
-# Remove default nginx static assets
+# 3. Pulisce e copia i contenuti pubblicati
 RUN rm -rf ./*
-
-# Copy Blazor WebAssembly published output to Nginx
 COPY --from=build /app/publish/wwwroot ./
 
-# Copy custom nginx config (optional, see below)
-COPY DockerCourseFrontend/nginx.conf /etc/nginx/conf.d/default.conf
+# 4. (Facoltativo) copia config custom se presente
+# Se non avete un nginx.conf in cartella, commentate o rimuovete la riga seguente
+#COPY nginx.conf /etc/nginx/conf.d/default.conf  non serve!!!!!
 
+# 5. Espone la porta HTTP
 EXPOSE 80
-ENTRYPOINT ["nginx", "-g", "daemon off;"]
 
+# 6. Avvia Nginx in foreground
+CMD ["nginx", "-g", "daemon off;"]
