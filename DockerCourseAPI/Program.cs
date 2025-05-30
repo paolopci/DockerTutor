@@ -1,46 +1,63 @@
 using System.Data.SqlClient;
 using Dapper;
 
-
 var builder = WebApplication.CreateBuilder(args);
-// Add services to the container.
-// 1) Definizione della policy CORS
+
+// Aggiungi servizi al container.
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowBlazorClient", policy =>
     {
         policy
-            .WithOrigins("https://localhost:7083")  // Origine del client
+            .WithOrigins("http://localhost:1234", "http://localhost:5163", "https://localhost:7163")
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 
+// Aggiungi controller per una migliore struttura API
+builder.Services.AddControllers();
+
 var app = builder.Build();
+
+// Configura la pipeline delle richieste HTTP
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
 
 app.UseCors("AllowBlazorClient");
 
 app.MapGet("/podcasts", async () =>
 {
-    // Use Microsoft.Data.SqlClient instead of System.Data.SqlClient
-    var db = new SqlConnection("Server=localhost,15001;Database=PodDB;User Id=sa;Password=Micene@65;Encrypt=True;TrustServerCertificate=True;MultipleActiveResultSets=True;Connection Timeout=30;");
-
-    return (await db.QueryAsync<Podcast>("SELECT * from Podcast")).Select(x=>x.Title);
-
-    //return podcasts;
-    //return new List<string>
-    //{
-    //    "Unhandled Exception Podcast",
-    //    "Developer Weekly Podcast",
-    //    "The Stack Overflow Podcast",
-    //    "The Hanselminutes Podcast",
-    //    "The .NET Rocks Podcast",
-    //    "The Azure Podcast",
-    //    "The AWS Podcast",
-    //    "The Rabbit Hole Podcast",
-    //    "The .NET Core Podcast",
-    //};
+    try
+    {
+        // Prova prima la connessione Docker, poi locale
+        var connectionString = Environment.GetEnvironmentVariable("DB_DOCKER") == "true" 
+            ? "Server=database,1433;Database=PodDB;User Id=sa;Password=Micene@65;Encrypt=True;TrustServerCertificate=True;MultipleActiveResultSets=True;Connection Timeout=30;"
+            : "Server=localhost,15001;Database=PodDB;User Id=sa;Password=Micene@65;Encrypt=True;TrustServerCertificate=True;MultipleActiveResultSets=True;Connection Timeout=30;";
+        
+        using var db = new SqlConnection(connectionString);
+        await db.OpenAsync();
+        
+        var podcasts = await db.QueryAsync<Podcast>("SELECT Id, Title FROM Podcast");
+        return Results.Ok(podcasts.Select(x => x.Title));
+    }
+    catch (SqlException ex)
+    {
+        Console.WriteLine($"Errore database: {ex.Message}");
+        return Results.Problem($"Connessione al database fallita: {ex.Message}");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Errore generale: {ex.Message}");
+        return Results.Problem($"Si è verificato un errore: {ex.Message}");
+    }
 });
+
+// Aggiungi un semplice endpoint di controllo salute
+app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
 
 app.Run();
 

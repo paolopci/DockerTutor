@@ -8,18 +8,14 @@ RUN dotnet restore "DockerCourseFrontend.csproj"
 
 # 2. Copia del sorgente e publish
 COPY . .
-RUN dotnet publish "DockerCourseFrontend.csproj" \
-    -c Release \
-    -o /app/publish \
-    /p:UseAppHost=false
+RUN dotnet publish "DockerCourseFrontend.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 # --- STAGE 2: runtime Nginx ---
-FROM nginx:alpine AS runtime
-WORKDIR /usr/share/nginx/html
-
-# 3. Pulisce e copia i contenuti pubblicati
-RUN rm -rf ./*
-COPY --from=build /app/publish/wwwroot ./
+FROM nginx:alpine
+# Configurazione per fallback SPA (rotte client-side)
+#COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copia degli artifact statici
+COPY --from=build /app/publish/wwwroot /usr/share/nginx/html
 
 # 4. (Facoltativo) copia config custom se presente
 # Se non avete un nginx.conf in cartella, commentate o rimuovete la riga seguente

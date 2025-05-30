@@ -6,7 +6,7 @@ services:
     build:
       context: ./DockerCourseFrontend
       dockerfile: Dockerfile
-    image: dometraindockercourse/frontend
+ 
     container_name: frontend
     ports:
       - "1234:80"
@@ -15,7 +15,7 @@ services:
     build:
       context: ./DockerCourseAPI      # <- nome esatto della cartella
       dockerfile: Dockerfile          # <- Dockerfile in DockerCourseAPI\
-    image: dometraindockercourse/api
+  
     container_name: api
     ports:
       - "5163:80"
@@ -27,12 +27,14 @@ services:
       - ACCEPT_EULA=true
       - MSSQL_SA_PASSWORD=Micene@65
     ports:
-      - "1433:1433"
+      - "15001:1433"
+    volumes:
+      - D:/test/docker/DockerTutor/mssql/data:/var/opt/mssql/data
 
-  database-seed:
-    depends_on:
-      - database
-    build:
-      context: ./Database            # <- contesto ristretto alla cartella Database
-      dockerfile: Dockerfile
-    container_name: database-seed
+  # database-seed:
+  #   depends_on:
+  #     - database
+  #   build:
+  #     context: ./Database            # <- contesto ristretto alla cartella Database
+  #     dockerfile: Dockerfile
+  #   container_name: database-seed
