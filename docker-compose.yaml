@@ -1,33 +1,38 @@
+version: '3.8'
+
 services:
 
   frontend:
     build:
-      context: ./DockerCourseFrontend/DockerCourseFrontend/.
+      context: ./DockerCourseFrontend
+      dockerfile: Dockerfile
     image: dometraindockercourse/frontend
     container_name: frontend
     ports:
-      - 1234:80
+      - "1234:80"
 
   api:
     build:
-      context: ./DockerCourseApi/.
-      dockerfile: DockerCourseApi/Dockerfile
+      context: ./DockerCourseAPI      # <- nome esatto della cartella
+      dockerfile: Dockerfile          # <- Dockerfile in DockerCourseAPI\
     image: dometraindockercourse/api
     container_name: api
     ports:
-      - 5163:80
-  # database:
-  #   image: mcr.microsoft.com/mssql/server:2022-latest
-  #   container_name: database
-  #   environment:
-  #     - ACCEPT_EULA=true
-  #     - MSSQL_SA_PASSWORD=Micene@65
-  #   ports:
-  #     - 1433:1433
+      - "5163:80"
 
-  # database-seed:
-  #   depends_on: [ database ]
-  #   build:
-  #     context: Database/
-  #     dockerfile: Dockerfile
-  #   container_name: database-seed
+  database:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: database
+    environment:
+      - ACCEPT_EULA=true
+      - MSSQL_SA_PASSWORD=Micene@65
+    ports:
+      - "1433:1433"
+
+  database-seed:
+    depends_on:
+      - database
+    build:
+      context: ./Database            # <- contesto ristretto alla cartella Database
+      dockerfile: Dockerfile
+    container_name: database-seed

@@ -23,9 +23,9 @@ app.UseCors("AllowBlazorClient");
 app.MapGet("/podcasts", async () =>
 {
     // Use Microsoft.Data.SqlClient instead of System.Data.SqlClient
-    var db = new SqlConnection("Server=localhost,1433;Database=PodDB;User Id=sa;Password=Micene@65;Encrypt=True;TrustServerCertificate=True;MultipleActiveResultSets=True;Connection Timeout=30;");
+    var db = new SqlConnection("Server=localhost,15001;Database=PodDB;User Id=sa;Password=Micene@65;Encrypt=True;TrustServerCertificate=True;MultipleActiveResultSets=True;Connection Timeout=30;");
 
-    return (await db.QueryAsync<Podcast>("SELECT * from Podcasts")).Select(x=>x.Title);
+    return (await db.QueryAsync<Podcast>("SELECT * from Podcast")).Select(x=>x.Title);
 
     //return podcasts;
     //return new List<string>

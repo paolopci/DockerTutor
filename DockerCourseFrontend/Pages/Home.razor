@@ -11,10 +11,12 @@
 
 @if (_podcasts is not null)
 {
+   
     <ul>
         @foreach (var podcast in _podcasts)
         {
-            <li>@podcast</li>
+            <li>@icount - @podcast</li>
+            icount++;
         }
     </ul>
 }
@@ -28,6 +30,7 @@ else
 
 @code {
     private List<string>? _podcasts;
+    private int icount = 1;
 
     private async Task GetPodcasts()
     {
